@@ -8,19 +8,30 @@ const Container = styled.div`
   flex-direction: column;
   align-items: center;
   padding: 20px;
-  max-width: 500px;
+  max-width: 700px;
   margin: auto;
 `;
 
+const InputGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+`;
+
+const Label = styled.label`
+  margin-bottom: 5px;
+  font-weight: bold;
+`;
+
 const Input = styled.input`
-  margin: 10px 0;
+  margin-bottom: 10px;
   padding: 8px;
   width: 100%;
   box-sizing: border-box;
 `;
 
 const Button = styled.button`
-  margin: 10px 0;
+  margin-top: 20px;
   padding: 10px 20px;
   background-color: #007bff;
   color: white;
@@ -40,6 +51,7 @@ const ImagePreview = styled.img`
   border-radius: 5px;
 `;
 
+
 function Img2Img() {
   const [prompt, setPrompt] = useState("");
   const [numInferenceSteps, setNumInferenceSteps] = useState(50);
@@ -47,11 +59,14 @@ function Img2Img() {
   const [imageSrc, setImageSrc] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [previewSrc, setPreviewSrc] = useState(null);
+  const [isImageUploaded, setIsImageUploaded] = useState(false);
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     setImageFile(file);
-    setPreviewSrc(URL.createObjectURL(file)); // 이미지 미리보기 설정
+    setImageSrc(URL.createObjectURL(file));
+    setIsImageUploaded(true);  // 이미지가 업로드되었음을 설정
+    console.log("Image uploaded: ", file);
   };
 
   const handleGenerateImg2Img = async () => {
