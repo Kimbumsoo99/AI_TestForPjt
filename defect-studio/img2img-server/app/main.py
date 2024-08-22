@@ -45,4 +45,3 @@ async def create_img2img(
     except Exception as e:
         print(f"Error during image generation: {e}")
         return {"error": str(e)}
-\\\
