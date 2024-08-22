@@ -17,6 +17,7 @@ i2i_pipe = StableDiffusionImg2ImgPipeline.from_pretrained(model_id, torch_dtype=
 # Inpaint 파이프라인
 inpaint_pipe = StableDiffusionInpaintPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to(device)
 
+print(f"Using device: {device}")
 
 # t2i 함수
 def generate_image(prompt: str, num_inference_steps: int = 50, guidance_scale: float = 7.5):
