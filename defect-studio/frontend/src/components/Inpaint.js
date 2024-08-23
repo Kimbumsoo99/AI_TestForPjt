@@ -57,8 +57,34 @@ const Button = styled.button`
 
 const CanvasContainer = styled.div`
   position: relative;
+  width: 512px;
+  height: 512px;
+  margin-top: 20px;
+  border: 2px solid #333;
+  background-color: #ffffff;
+`;
+
+const StyledImage = styled.img`
   width: 100%;
   height: 100%;
+  display: block;
+  object-fit: contain;
+`;
+
+const StyledCanvas = styled.canvas`
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  cursor: none;
+`;
+
+const ImagePreview = styled.img`
+  width: 512px;
+  height: 512px;
+  margin-top: 20px;
+  border: 2px solid #333;
+  object-fit: contain;
 `;
 
 function Inpaint() {
@@ -67,6 +93,8 @@ function Inpaint() {
   const [guidanceScale, setGuidanceScale] = useState(7.5);
   const [imageSrc, setImageSrc] = useState(null);
   const [imageFile, setImageFile] = useState(null);
+  const [maskSrc, setMaskSrc] = useState(null);
+  const [generatedImageSrc, setGeneratedImageSrc] = useState(null); // 생성된 이미지를 위한 상태 추가
   const [canvasWidth, setCanvasWidth] = useState(512);
   const [canvasHeight, setCanvasHeight] = useState(512);
   const canvasRef = useRef(null);
@@ -76,7 +104,19 @@ function Inpaint() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isImageUploaded, setIsImageUploaded] = useState(false);
 
-  // 파일 업로드 핸들러
+  useEffect(() => {
+    if (imageSrc && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
+      const img = new Image();
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // 캔버스를 초기화
+        ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight); // 이미지를 캔버스에 그립니다.
+      };
+      img.src = imageSrc;
+    }
+  }, [imageSrc, canvasWidth, canvasHeight]);
+
   const handleFileUploadClick = () => {
     if (!isImageUploaded) {
       inputFileRef.current.click();
@@ -87,25 +127,67 @@ function Inpaint() {
     const file = e.target.files[0];
     setImageFile(file);
     setImageSrc(URL.createObjectURL(file));
-    setIsImageUploaded(true);  // 이미지가 업로드되었음을 설정
+    setIsImageUploaded(true);
     console.log("Image uploaded: ", file);
   };
 
   const handleGenerateInpaint = async () => {
     console.log("Generating Inpaint...");
+
     const canvas = canvasRef.current;
     if (canvas) {
-      const maskBlob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+      // 마스크 이미지를 생성합니다.
+      const ctx = canvas.getContext("2d");
+      const maskCanvas = document.createElement("canvas");
+      maskCanvas.width = canvas.width;
+      maskCanvas.height = canvas.height;
+      const maskCtx = maskCanvas.getContext("2d");
 
+      // 캔버스의 그림을 가져옵니다.
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+
+      // 모든 픽셀을 검사하여 색칠된 부분만 흰색으로 바꾸고 나머지는 검은색으로 유지합니다.
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i] === 200 && data[i + 1] === 200 && data[i + 2] === 200) {
+          // 나머지 부분을 흰색으로 설정
+          data[i] = 255;
+          data[i + 1] = 255;
+          data[i + 2] = 255;
+          data[i + 3] = 1;
+        } else {
+          // 색칠된 부분을 검정색으로 설정
+          data[i] = 0;
+          data[i + 1] = 0;
+          data[i + 2] = 0;
+          data[i + 3] = 1;
+        }
+      }
+
+      // 마스크 이미지 생성
+      maskCtx.putImageData(imageData, 0, 0);
+
+      // 마스크 캔버스를 Blob으로 변환합니다.
+      const maskBlob = await new Promise((resolve) => maskCanvas.toBlob(resolve, "image/png"));
+
+      // 생성된 마스크를 미리보기 위해 Blob URL로 변환합니다.
+      setMaskSrc(URL.createObjectURL(maskBlob));
+      console.log("Mask Image URL:", maskSrc);
+
+      // 원본 이미지와 마스크 이미지를 함께 서버로 보냅니다.
       if (imageFile && maskBlob) {
-        const imageUrl = await generateInpaint(
-          prompt,
-          imageFile,
-          maskBlob,
-          numInferenceSteps,
-          guidanceScale
-        );
-        setImageSrc(imageUrl);
+        try {
+          const imageUrl = await generateInpaint(
+            prompt,
+            imageFile,
+            maskBlob,
+            numInferenceSteps,
+            guidanceScale
+          );
+          setGeneratedImageSrc(imageUrl); // 생성된 이미지를 별도로 저장
+        } catch (error) {
+          console.error("Error generating inpaint:", error);
+        }
       }
     }
   };
@@ -127,7 +209,8 @@ function Inpaint() {
     if (canvas) {
       const ctx = canvas.getContext("2d");
       ctx.lineTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-      ctx.strokeStyle = "rgba(255, 255, 0, 0.7)"; // 노란색 반투명 브러쉬
+      ctx.globalCompositeOperation = "source-over"; // 덧칠 방지
+      ctx.strokeStyle = "rgba(200, 200, 200)"; // 노란색 반투명 브러쉬
       ctx.lineWidth = 30; // 브러쉬 크기
       ctx.lineCap = "round"; // 부드러운 브러쉬
       ctx.stroke();
@@ -140,37 +223,6 @@ function Inpaint() {
     setIsDrawing(false);
     console.log("Stop drawing");
   };
-
-  const resizeImageAndCanvas = () => {
-    const img = imgRef.current;
-    if (img) {
-      const maxDimension = 512;
-      let width = img.width;
-      let height = img.height;
-
-      if (width > height) {
-        if (width > maxDimension) {
-          height = Math.round((height * maxDimension) / width);
-          width = maxDimension;
-        }
-      } else {
-        if (height > maxDimension) {
-          width = Math.round((width * maxDimension) / height);
-          height = maxDimension;
-        }
-      }
-
-      setCanvasWidth(width);
-      setCanvasHeight(height);
-      console.log("Resized canvas to: ", width, height);
-    }
-  };
-
-  useEffect(() => {
-    if (imageSrc) {
-      resizeImageAndCanvas();
-    }
-  }, [imageSrc]);
 
   return (
     <Container>
@@ -208,64 +260,48 @@ function Inpaint() {
           step="0.1"
         />
       </InputGroup>
-      <Input
-        type="file"
-        ref={inputFileRef}
-        onChange={handleImageUpload}
-      />
-      <UploadArea onClick={handleFileUploadClick} style={{ display: isImageUploaded ? 'none' : 'flex' }}>
+      <Input type="file" ref={inputFileRef} onChange={handleImageUpload} />
+      <UploadArea
+        onClick={handleFileUploadClick}
+        style={{ display: isImageUploaded ? "none" : "flex" }}
+      >
         <p>이미지를 업로드하려면 클릭하세요</p>
       </UploadArea>
       {imageSrc && (
-        <CanvasContainer style={{ width: `${canvasWidth}px`, height: `${canvasHeight}px` }}>
-          <img
-            src={imageSrc}
-            alt="Uploaded Image"
-            ref={imgRef}
-            style={{
-              width: "100%",
-              height: "100%",
-              display: "block",
-              position: "absolute",
-              top: 0,
-              left: 0,
-              zIndex: 1,
-            }}
-            onLoad={resizeImageAndCanvas}
-          />
-          <canvas
-            ref={canvasRef}
-            width={canvasWidth}
-            height={canvasHeight}
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              zIndex: 2,
-              cursor: "none", // 커서를 숨김
-            }}
-            onMouseDown={startDrawing}
-            onMouseMove={draw}
-            onMouseUp={stopDrawing}
-            onMouseLeave={stopDrawing}
-          />
-          {isDrawing && (
-            <div
-              style={{
-                position: "absolute",
-                top: `${mousePosition.y - 15}px`, // 브러쉬 크기의 반만큼 이동
-                left: `${mousePosition.x - 15}px`,
-                width: "30px",
-                height: "30px",
-                backgroundColor: "rgba(255, 255, 0, 0.7)", // 브러쉬 색상
-                borderRadius: "50%", // 원형 브러쉬
-                pointerEvents: "none", // 클릭 이벤트를 무시
-                zIndex: 3,
-              }}
+        <>
+          <CanvasContainer>
+            {/* 배경에 원본 이미지를 둡니다 */}
+            <StyledImage src={imageSrc} alt="Uploaded Image" ref={imgRef} />
+            {/* 투명 캔버스에만 그림을 그립니다 */}
+            <StyledCanvas
+              ref={canvasRef}
+              width={canvasWidth}
+              height={canvasHeight}
+              onMouseDown={startDrawing}
+              onMouseMove={draw}
+              onMouseUp={stopDrawing}
+              onMouseLeave={stopDrawing}
             />
-          )}
-        </CanvasContainer>
+            {isDrawing && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: `${mousePosition.y - 15}px`, // 브러쉬 크기의 반만큼 이동
+                  left: `${mousePosition.x - 15}px`,
+                  width: "30px",
+                  height: "30px",
+                  backgroundColor: "rgba(200, 200, 200)", // 브러쉬 색상
+                  borderRadius: "50%", // 원형 브러쉬
+                  pointerEvents: "none", // 클릭 이벤트를 무시
+                  zIndex: 3,
+                }}
+              />
+            )}
+          </CanvasContainer>
+          {maskSrc && <ImagePreview src={maskSrc} alt="Mask Preview" />}
+        </>
       )}
+      {generatedImageSrc && <ImagePreview src={generatedImageSrc} alt="Generated Image" />}
       <Button onClick={handleGenerateInpaint}>Inpaint</Button>
     </Container>
   );

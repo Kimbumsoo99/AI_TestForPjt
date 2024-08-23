@@ -62,6 +62,7 @@ export const generateInpaint = async (prompt, imageFile, maskFile, numInferenceS
       },
       responseType: "blob",
     });
+    console.log(response)
     return URL.createObjectURL(response.data);
   } catch (error) {
     console.error("Error generating inpaint:", error);

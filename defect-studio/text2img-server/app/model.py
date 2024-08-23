@@ -6,7 +6,8 @@ from PIL import Image
 
 # Stable Diffusion 모델 초기화
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model_id = "CompVis/stable-diffusion-v1-4"
+# model_id = "CompVis/stable-diffusion-v1-4"
+model_id = "runwayml/stable-diffusion-v1-5"
 
 # Text2Img 파이프라인
 t2i_pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to(device)
