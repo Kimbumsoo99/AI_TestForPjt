@@ -4,6 +4,7 @@ import Text2Img from "./components/Text2Img";
 import Img2Img from "./components/Img2Img";
 import styled from "styled-components";
 import Inpaint from "./components/Inpaint";
+import RemoveBg from "./components/RemoveBg";
 
 // 스타일링 컴포넌트
 const AppContainer = styled.div`
@@ -23,6 +24,7 @@ function App() {
       {selectedPage === "text2img" && <Text2Img />}
       {selectedPage === "img2img" && <Img2Img />}
       {selectedPage === "inpaint" && <Inpaint />}
+      {selectedPage === "removebg" && <RemoveBg />}
     </AppContainer>
   );
 }

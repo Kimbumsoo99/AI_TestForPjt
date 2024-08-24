@@ -69,3 +69,23 @@ export const generateInpaint = async (prompt, imageFile, maskFile, numInferenceS
     throw error;
   }
 };
+
+// rembg (Remove Background) 요청 함수
+export const removeBackground = async (imageFile) => {
+  try {
+    const formData = new FormData();
+    formData.append("image", imageFile);
+
+    const response = await apiClient.post("/remove-bg/", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      responseType: "blob",
+    });
+    return URL.createObjectURL(response.data);
+  } catch (error) {
+    console.error("Error removing background:", error);
+    throw error;
+  }
+};
+
