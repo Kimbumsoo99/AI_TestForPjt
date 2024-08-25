@@ -89,3 +89,26 @@ export const removeBackground = async (imageFile) => {
   }
 };
 
+// Cleanup 요청 함수
+export const generateCleanup = async (prompt, imageFile, maskFile, numInferenceSteps, guidanceScale) => {
+  try {
+    const formData = new FormData();
+    formData.append("prompt", prompt);
+    formData.append("image", imageFile);
+    formData.append("mask", maskFile);
+    formData.append("num_inference_steps", numInferenceSteps);
+    formData.append("guidance_scale", guidanceScale);
+
+    const response = await apiClient.post("/generate-cleanup/", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      responseType: "blob",
+    });
+    return URL.createObjectURL(response.data);
+  } catch (error) {
+    console.error("Error generating cleanup:", error);
+    throw error;
+  }
+};
+

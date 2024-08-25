@@ -44,6 +44,9 @@ function Navbar({ selectedPage, setSelectedPage }) {
         <NavItem isActive={selectedPage === "removebg"} onClick={() => setSelectedPage("removebg")}>
           Remove Background
         </NavItem>
+        <NavItem isActive={selectedPage === "cleanup"} onClick={() => setSelectedPage("cleanup")}>
+          Cleanup
+        </NavItem>
       </NavList>
     </Nav>
   );
