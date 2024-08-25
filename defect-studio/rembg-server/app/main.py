@@ -4,16 +4,27 @@ from rembg import remove
 from io import BytesIO
 from PIL import Image
 import torch
+import os
 
 app = FastAPI()
 
 # GPU 설정을 시도하고 실패하면 CPU로 설정
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+try:
+    import onnxruntime
 
-if torch.cuda.is_available():
-    print("Using GPU for rembg.")
-else:
-    print("CUDA is not available. Using CPU for rembg.")
+    # ONNX Runtime이 설치되어 있고 CUDA를 사용할 수 있는지 확인
+    if torch.cuda.is_available():
+        print("CUDA is available. Attempting to use GPU.")
+        os.environ["ONNX_RUNTIME_USE_CUDA"] = "1"  # CUDA 사용을 설정
+    else:
+        print("CUDA is not available. Using CPU for rembg.")
+        os.environ["ONNX_RUNTIME_USE_CUDA"] = "0"  # CPU로 강제 설정
+except ImportError as e:
+    # ONNX Runtime이 설치되어 있지 않으면 CPU로 강제 설정
+    os.environ["ONNX_RUNTIME_USE_CUDA"] = "0"
+    print("onnxruntime-gpu is not installed. Using CPU for rembg.")
+    print(f"ImportError: {e}")
+
 
 
 # rembg를 이용한 배경 제거 엔드포인트
