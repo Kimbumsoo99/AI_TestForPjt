@@ -25,6 +25,7 @@ async def create_img2img(
         num_inference_steps: int = Form(50, ge=1, le=100, description="추론 단계 수"),
         guidance_scale: float = Form(7.5, ge=1.0, le=20.0, description="가이던스 스케일")
 ):
+    print(f"prompt: {prompt}, image: {image}, num_inference_steps: {num_inference_steps}, guidance_scale: {guidance_scale}")
     try:
         # 업로드된 이미지를 PIL.Image로 변환
         image_bytes = await image.read()

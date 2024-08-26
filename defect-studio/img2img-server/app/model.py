@@ -16,8 +16,9 @@ print(f"Using device: {device}")
 
 # i2i 함수
 def generate_img2img(init_image: Image, prompt: str, num_inference_steps: int = 50, guidance_scale: float = 7.5):
+    print(f"Generating {num_inference_steps} inference steps...")
     try:
-        generated_image = i2i_pipe(prompt=prompt, image=init_image, strength=0.75, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale).images[0]
+        generated_image = i2i_pipe(prompt=prompt, image=init_image, strength=0.7, num_inference_steps=num_inference_steps, guidance_scale=guidance_scale).images[0]
         return generated_image
     except Exception as e:
         print(f"Error during image generation: {e}")

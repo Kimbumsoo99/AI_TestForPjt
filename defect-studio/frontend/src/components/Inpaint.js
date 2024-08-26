@@ -298,7 +298,7 @@ function Inpaint() {
               />
             )}
           </CanvasContainer>
-          {maskSrc && <ImagePreview src={maskSrc} alt="Mask Preview" />}
+          {/* {maskSrc && <ImagePreview src={maskSrc} alt="Mask Preview" />} */}
         </>
       )}
       {generatedImageSrc && <ImagePreview src={generatedImageSrc} alt="Generated Image" />}

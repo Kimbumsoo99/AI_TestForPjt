@@ -23,7 +23,7 @@ def generate_cleanup(init_image: Image, mask_image: Image, prompt: str, num_infe
     print(
         f"generate_cleanup init_image: {init_image}, mask_image: {mask_image}, prompt: {prompt}, num_inference_steps: {num_inference_steps}, guidance_scale: {guidance_scale}")
     try:
-        # inpainting 작업 수행
+        # 이미지를 올바른 형태로 변환하여 inpainting 수행
         temp_pipe_image = inpaint_pipe(
             prompt=prompt,
             image=init_image,
@@ -42,7 +42,7 @@ def generate_cleanup(init_image: Image, mask_image: Image, prompt: str, num_infe
         mask_np = np.array(mask_image.convert("L"))  # 마스크 이미지를 그레이스케일로 변환
 
         # 마스크의 흰색 영역(255)은 생성된 이미지로, 검은색 영역(0)은 원본 이미지로 남김
-        combined_np = generated_np * (mask_np[..., None] > 127) + init_np * (mask_np[..., None] <= 127)
+        combined_np = np.where(mask_np[..., None] > 127, generated_np, init_np)
 
         # NumPy 배열을 다시 PIL 이미지로 변환
         final_image = Image.fromarray(combined_np.astype(np.uint8))

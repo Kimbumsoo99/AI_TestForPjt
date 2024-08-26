@@ -300,7 +300,7 @@ function Cleanup() {
               />
             )}
           </CanvasContainer>
-          {maskSrc && <ImagePreview src={maskSrc} alt="Mask Preview" />}
+          {/* {maskSrc && <ImagePreview src={maskSrc} alt="Mask Preview" />} */}
         </>
       )}
       {cleanedImageSrc && <ImagePreview src={cleanedImageSrc} alt="Cleaned Image" />}
