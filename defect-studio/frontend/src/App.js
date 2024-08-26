@@ -6,6 +6,7 @@ import styled from "styled-components";
 import Inpaint from "./components/Inpaint";
 import RemoveBg from "./components/RemoveBg";
 import Cleanup from "./components/Cleanup";
+import ClipInterrogator from "./components/ClipInterrogator";
 
 // 스타일링 컴포넌트
 const AppContainer = styled.div`
@@ -27,6 +28,7 @@ function App() {
       {selectedPage === "inpaint" && <Inpaint />}
       {selectedPage === "removebg" && <RemoveBg />}
       {selectedPage === "cleanup" && <Cleanup />}
+      {selectedPage === "clip" && <ClipInterrogator />}
     </AppContainer>
   );
 }

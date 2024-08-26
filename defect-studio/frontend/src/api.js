@@ -112,3 +112,20 @@ export const generateCleanup = async (prompt, imageFile, maskFile, numInferenceS
   }
 };
 
+export const generatePromptFromImage = async (imageFile) => {
+  const formData = new FormData();
+  formData.append("image", imageFile);
+
+  try {
+    const response = await apiClient.post("/generate-prompt/", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    return response.data.generated_prompt; // 서버에서 반환된 프롬프트 추출
+  } catch (error) {
+    console.error("Error generating prompt from image:", error);
+    throw error;
+  }
+};
