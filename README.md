@@ -34,6 +34,9 @@ propmpt: replace the masked area with a realistic brown horse, ensuring the hors
 
 ![cleanup](./imgs/cleanup_sample.PNG)
 
+## CLIP Intterogator
+
+![CLIP](./imgs/clip_inttrogator_sample.PNG)
 
 GPU 관련
 ```

@@ -3,7 +3,7 @@ import axios from "axios";
 // 공통 API 클라이언트 설정
 const apiClient = axios.create({
   baseURL: "http://localhost:8000",
-  timeout: 100000,
+  timeout: 1000000,
 });
 
 // Text-to-Image (t2i) 이미지 생성 요청 함수

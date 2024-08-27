@@ -48,7 +48,7 @@ function Navbar({ selectedPage, setSelectedPage }) {
           Cleanup
         </NavItem>
         <NavItem isActive={selectedPage === "clip"} onClick={() => setSelectedPage("clip")}>
-          Cleanup
+          CLIP
         </NavItem>
       </NavList>
     </Nav>
