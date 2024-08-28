@@ -1,10 +1,12 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-from transformers import pipeline
+from rembg import remove
 from PIL import Image
 from io import BytesIO
 import os
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 import time  # 작업 시간 측정을 위해 추가
 
 app = FastAPI()
@@ -21,15 +23,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 이미지 세그멘테이션 파이프라인 생성 (GPU 사용 설정)
-rmbg_pipeline = pipeline("image-segmentation", model="briaai/RMBG-1.4", trust_remote_code=True, device=0)
 
-print("rmbg server is ready")
+def sync_remove_background(input_image):
+    output_image = remove(input_image)
+    return output_image
 
 
 @app.post("/remove-bg/")
 async def remove_background(image: UploadFile = File(...)):
-    print("removing background image")
     try:
         start_time = time.time()  # 시작 시간 기록
         image_bytes = await image.read()
@@ -39,13 +40,11 @@ async def remove_background(image: UploadFile = File(...)):
         input_image.save(input_image_path)
         print(f"Input image saved at: {input_image_path}")
 
+        loop = asyncio.get_event_loop()
+        with ThreadPoolExecutor() as pool:
+            output_image = await loop.run_in_executor(pool, sync_remove_background, input_image)
+
         output_image_path = os.path.join(UPLOAD_FOLDER, "output_image.png")
-
-        # 배경 제거를 위한 이미지 처리
-        output_image = rmbg_pipeline(input_image)
-
-        # 결과 저장
-        # 'result'가 이미지 객체인 경우 직접 저장
         output_image.save(output_image_path)
         print(f"Output image saved at: {output_image_path}")
 
@@ -61,7 +60,3 @@ async def remove_background(image: UploadFile = File(...)):
     except Exception as e:
         print(f"Error during background removal: {e}")
         return {"error": str(e)}
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
