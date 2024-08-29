@@ -10,7 +10,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model_id = "runwayml/stable-diffusion-v1-5"
 
 # Img2Img 파이프라인
-i2i_pipe = StableDiffusionImg2ImgPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to(device)
+i2i_pipe = (StableDiffusionImg2ImgPipeline.from_pretrained(model_id, torch_dtype=torch.float16))
+i2i_pipe.to(device)
 
 print(f"Using device: {device}")
 

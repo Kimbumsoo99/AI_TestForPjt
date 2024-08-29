@@ -17,6 +17,8 @@ export const generateImage = async (prompt, numInferenceSteps, guidanceScale) =>
       },
       responseType: "blob", // 이미지 데이터를 바이너리로 받기 위함
     });
+
+    console.log(response)
     return URL.createObjectURL(response.data); // Blob URL 생성
   } catch (error) {
     console.error("Error generating image:", error);

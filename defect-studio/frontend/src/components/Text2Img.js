@@ -32,9 +32,17 @@ const Button = styled.button`
     }
 `;
 
+
+const ImagesGrid = styled.div`
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    width: 100%;
+    margin-top: 20px;
+`;
+
 const ImagePreview = styled.img`
-    margin: 20px 0;
-    max-width: 100%;
+    width: 100%;
     height: auto;
     border: 2px solid #ddd;
     border-radius: 5px;
@@ -48,6 +56,7 @@ function Text2Img() {
 
     const handleGenerateImage = async () => {
         const imageUrl = await generateImage(prompt, numInferenceSteps, guidanceScale);
+        console.log(imageUrl)
         setImageSrc(imageUrl);
     };
 
@@ -77,6 +86,12 @@ function Text2Img() {
             />
             <Button onClick={handleGenerateImage}>이미지 생성</Button>
             {imageSrc && <ImagePreview src={imageSrc} alt="Generated" />}
+            {/* 여러 이미지를 그리드로 표시 */}
+            {/* <ImagesGrid>
+                {imageSrc !== null && imageSrc.map((src, index) => (
+                    <ImagePreview key={index} src={src[0]} alt={`Generated ${index + 1}`} />
+                ))}
+            </ImagesGrid> */}
         </Container>
     );
 }
