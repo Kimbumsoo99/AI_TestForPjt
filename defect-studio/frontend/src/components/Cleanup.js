@@ -180,11 +180,8 @@ function Cleanup() {
         try {
           const imageUrl = await generateCleanup(
             // 함수 이름 변경
-            prompt,
             imageFile,
             maskBlob,
-            numInferenceSteps,
-            guidanceScale
           );
           setCleanedImageSrc(imageUrl); // 생성된 이미지를 별도로 저장
         } catch (error) {
@@ -229,39 +226,6 @@ function Cleanup() {
   return (
     <Container>
       <h2>Cleanup</h2>
-      <InputGroup>
-        <Label htmlFor="prompt">Prompt:</Label>
-        <Input
-          id="prompt"
-          type="text"
-          placeholder="프롬프트 입력"
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-        />
-      </InputGroup>
-      <InputGroup>
-        <Label htmlFor="steps">Inference Steps:</Label>
-        <Input
-          id="steps"
-          type="number"
-          value={numInferenceSteps}
-          onChange={(e) => setNumInferenceSteps(e.target.value)}
-          min="1"
-          max="100"
-        />
-      </InputGroup>
-      <InputGroup>
-        <Label htmlFor="scale">Guidance Scale:</Label>
-        <Input
-          id="scale"
-          type="number"
-          value={guidanceScale}
-          onChange={(e) => setGuidanceScale(e.target.value)}
-          min="1.0"
-          max="20.0"
-          step="0.1"
-        />
-      </InputGroup>
       <Input type="file" ref={inputFileRef} onChange={handleImageUpload} />
       <UploadArea
         onClick={handleFileUploadClick}

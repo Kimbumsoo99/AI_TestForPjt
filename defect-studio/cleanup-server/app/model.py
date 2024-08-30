@@ -1,58 +1,77 @@
-from diffusers import StableDiffusionInpaintPipeline
-import torch
-import os
 from PIL import Image
-import numpy as np
+import subprocess
+import os
 
-# Stable Diffusion 모델 초기화
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# Set base path
+base_path = "C:/uploads/lama"
+input_image_path = "C:/uploads/lama/ii.png"
+input_mask_path = "C:/uploads/lama/ii_mask.jpg"
 
-# 폴더가 존재하지 않는 경우 생성
-output_dir = "C:/uploads/defect"
-os.makedirs(output_dir, exist_ok=True)
-
-# Inpaint 파이프라인
-inpaint_pipe = StableDiffusionInpaintPipeline.from_pretrained(
-    "runwayml/stable-diffusion-inpainting", torch_dtype=torch.float16
-).to(device)
-
-print(f"Using device: {device}")
-
-def generate_cleanup(init_image: Image, mask_image: Image, prompt: str, num_inference_steps: int = 50,
-                     guidance_scale: float = 7.5):
-    print(
-        f"generate_cleanup init_image: {init_image}, mask_image: {mask_image}, prompt: {prompt}, num_inference_steps: {num_inference_steps}, guidance_scale: {guidance_scale}")
+def generate_cleanup(init_image: Image, mask_image: Image):
+    """
+    Generate a cleaned-up image using IOPaint.
+    Args:
+        init_image (Image): The initial image to clean up.
+        mask_image (Image): The mask image indicating areas to clean up.
+    Returns:
+        Image: The cleaned-up image or None if an error occurred.
+    """
     try:
-        # 이미지를 올바른 형태로 변환하여 inpainting 수행
-        temp_pipe_image = inpaint_pipe(
-            prompt=prompt,
-            image=init_image,
-            mask_image=mask_image,
-            num_inference_steps=num_inference_steps,
-            guidance_scale=guidance_scale
-        )
-        print(f"temp_pipe_image_done")
+        # Save the images temporarily to disk
+        temp_input_path = os.path.join(base_path, "temp_input.png")
+        temp_mask_path = os.path.join(base_path, "temp_mask.png")
+        output_path = os.path.join(base_path, "output")
 
-        generated_image = temp_pipe_image.images[0]
-        print(f"generated_image: {generated_image}")
+        # Save input and mask images
+        init_image.save(temp_input_path)
+        mask_image.save(temp_mask_path)
 
-        # 원본 이미지와 생성된 이미지를 NumPy 배열로 변환
-        init_np = np.array(init_image)
-        generated_np = np.array(generated_image)
-        mask_np = np.array(mask_image.convert("L"))  # 마스크 이미지를 그레이스케일로 변환
+        # Prepare the IOPaint command
+        cmd = [
+            "iopaint", "run",
+            "--model=lama",
+            "--device=cuda",
+            f"--image={temp_input_path}",
+            f"--mask={temp_mask_path}",
+            f"--output={output_path}"
+        ]
 
-        # 마스크의 흰색 영역(255)은 생성된 이미지로, 검은색 영역(0)은 원본 이미지로 남김
-        combined_np = np.where(mask_np[..., None] > 127, generated_np, init_np)
+        # Start subprocess using cmd and wait for it to finish
+        result = subprocess.run(cmd, shell=True)
 
-        # NumPy 배열을 다시 PIL 이미지로 변환
-        final_image = Image.fromarray(combined_np.astype(np.uint8))
+        if result.returncode == 0:
+            print("Cleanup process completed successfully.")
+            # Load the output image
+            final_image_path = os.path.join(output_path, "temp_input.png")  # Adjust the output filename as needed
+            final_image = Image.open(final_image_path)
+            return final_image
+        else:
+            print(f"Cleanup process failed with return code: {result.returncode}")
+            return None
 
-        # 파일명을 생성하여 이미지 저장
-        output_file = os.path.join(output_dir, "cleanup_image.png")
-        final_image.save(output_file)
-        print(f"Image saved to: {output_file}")
-
-        return final_image
     except Exception as e:
         print(f"Error during cleanup generation: {e}")
         return None
+    finally:
+        # Clean up temporary files
+        if os.path.exists(temp_input_path):
+            os.remove(temp_input_path)
+        if os.path.exists(temp_mask_path):
+            os.remove(temp_mask_path)
+
+if __name__ == "__main__":
+    # Example usage
+    print("Starting batch processing...")
+
+    # Load input image and mask
+    init_image = Image.open(input_image_path).convert("RGB")
+    mask_image = Image.open(input_mask_path).convert("RGB")
+
+    # Perform cleanup
+    cleaned_image = generate_cleanup(init_image, mask_image)
+
+    if cleaned_image:
+        cleaned_image.save(os.path.join(base_path, "cleaned_output.png"))
+        print("Cleaned image saved successfully.")
+    else:
+        print("Failed to generate cleaned image.")

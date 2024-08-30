@@ -23,14 +23,15 @@ os.makedirs(output_dir, exist_ok=True)
 
 @app.post("/generate-cleanup/")
 async def create_cleanup(
-        prompt: str = Form(..., description="이미지를 변환할 텍스트 프롬프트"),
+        # prompt: str = Form(..., description="이미지를 변환할 텍스트 프롬프트"),
         image: UploadFile = File(..., description="기본 이미지 파일"),
         mask: UploadFile = File(..., description="마스크 이미지 파일"),
-        num_inference_steps: int = Form(50, ge=1, le=500, description="추론 단계 수"),
-        guidance_scale: float = Form(7.5, ge=1.0, le=20.0, description="가이던스 스케일")
+        # num_inference_steps: int = Form(50, ge=1, le=500, description="추론 단계 수"),
+        # guidance_scale: float = Form(7.5, ge=1.0, le=20.0, description="가이던스 스케일")
 ):
-    print(f"prompt: {prompt}, image: {image}, mask: {mask}")
+    # print(f"prompt: {prompt}, image: {image}, mask: {mask}")
     try:
+        print(f"image: {image}, mask: {mask}")
         # 업로드된 이미지를 PIL.Image로 변환
         image_bytes = await image.read()
         init_image = Image.open(BytesIO(image_bytes)).convert("RGB")
@@ -53,7 +54,7 @@ async def create_cleanup(
 
         print(f"generated_image before")
         # Cleanup 작업 수행
-        cleaned_image = generate_cleanup(init_image, mask_image, prompt, num_inference_steps, guidance_scale)
+        cleaned_image = generate_cleanup(init_image, mask_image)
         print(f"generated_image after")
 
         if cleaned_image is None:
