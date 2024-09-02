@@ -1,5 +1,5 @@
 # model.py
-from diffusers import StableDiffusionInpaintPipeline
+from diffusers import StableDiffusionInpaintPipeline, AutoPipelineForInpainting
 import torch
 import os
 from PIL import Image
@@ -17,9 +17,13 @@ os.makedirs(output_dir, exist_ok=True)
 # inpaint_pipe = StableDiffusionInpaintPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to(device)
 # inpaint_pipe.safety_checker = lambda images, **kwargs: (images, False)  # 안전 검사 비활성화 (NSFW 콘텐츠)
 
-inpaint_pipe = StableDiffusionInpaintPipeline.from_pretrained(
-    "runwayml/stable-diffusion-inpainting", torch_dtype=torch.float16
+# inpaint_pipe = StableDiffusionInpaintPipeline.from_pretrained(
+#     "stabilityai/stable-diffusion-2-inpainting", torch_dtype=torch.float16
+# )
+inpaint_pipe = AutoPipelineForInpainting.from_pretrained(
+    "diffusers/stable-diffusion-xl-1.0-inpainting-0.1", torch_dtype=torch.float16
 )
+
 inpaint_pipe = inpaint_pipe.to("cuda")
 # inpaint_pipe.safety_checker = lambda images, **kwargs: (images, False)  # 안전 검사 비활성화 (NSFW 콘텐츠)
 
