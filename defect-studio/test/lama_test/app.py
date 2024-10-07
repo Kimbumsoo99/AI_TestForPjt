@@ -56,7 +56,7 @@ input_image = Image.open("C:/uploads/lama/input.png").convert("RGB")
 input_mask = Image.open("C:/uploads/lama/input_mask.jpg").convert("L")  # 마스크는 일반적으로 L 모드(흑백)로 처리
 
 # 이미지 클린업 수행
-output = pipeline(prompt="restore the damaged area", image=input_image, mask_image=input_mask).images[0]
+output = pipeline(prompt="restore the area", image=input_image, mask_image=input_mask).images[0]
 
 # 결과 저장
 output.save("C:/uploads/lama/output.png")
