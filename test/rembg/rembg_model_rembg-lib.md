@@ -1,12 +1,11 @@
 # Background Removal AI Model Test Document
 ## 1. 개요
 ### 1.1 테스트 목적
-본 테스트의 목적은 briaai/RMBG-1.4 AI 모델의 성능, 정확도 및 추론 가용성을 평가하는 것입니다.
+본 테스트의 목적은 python의 rembg 라이브러리의 성능, 정확도 및 추론 가용성을 평가하는 것입니다.
 
 ### 1.2 테스트 대상 모델
-- 모델명: **briaai/RMBG-1.4**
-- 레퍼런스: [huggingface link](https://huggingface.co/briaai/RMBG-1.4) / [github](https://github.com/chenxwh/cog-RMBG)
-- 모델 유형: `IS-Net`
+- 라이브러리명: **rembg**
+- 레퍼런스: [github](https://github.com/danielgatis/rembg) / [pypi](https://pypi.org/project/rembg/)
 
 ## 2. 테스트 환경
 ### 2.1 하드웨어 (ex.)
@@ -47,16 +46,16 @@
 #### 4.1.1 MAE/F-Measure
 | 수량(Quantity) | MAE | F-Measure(F1 Score) |
 |---------------|---------------|---------------|
-|      1장          |     0.14 ~ 9.32       |    0.36 ~ 0.99 |
-|      10장         |     0.17 ~ 4.90      |    0.49 ~ 0.99   |
-|      70장         |        1.48       |      0.90        |
+|      1장          |     0.15 ~ 50.4       |    0.16 ~ 0.99 |
+|      10장         |     0.19 ~ 34.35      |    0.44 ~ 0.99   |
+|      70장         |        5.98       |      0.82        |
 
 #### 4.1.2 Speed/GPU Usage 평가
 | 표본 | 처리 시간 (ms) | GPU 메모리 (MB) |
 |---------------|---------------|----------------|
-|      1장         |      600ms      |     968MB        |
-|      10장         |     5000ms       |      968MB     |
-|      70장         |     45310ms       |      968MB      |
+|      1장         |      1100ms      |     CPU 사용        |
+|      10장         |     13000ms       |      CPU 사용     |
+|      70장         |     97590ms       |      CPU 사용      |
 
 ### 4.2 정성평가 (Qualitative Evaluation)
 > 각 카테고리 별로 특징 나열 후 사진 평가를 진행합니다. 사용된 카테고리는 배경을 기반으로 하였습니다.
@@ -70,7 +69,7 @@
 |---------------|---------------|---------------|
 |      흰색      |   30장  |    성공적인 작업 (100%)      |
 |      검은색         | 30장 |    성공적인 작업 (100%)        |
-|      컬러         |  10장  |   불안정한 작업 포함 (80%)    |
+|      컬러         |  10장  |   작업 실패 (5%)    |
 
 
 ### 4.4 이미지 크기 및 해상도 테스트
@@ -82,11 +81,9 @@
 2. 모델 로드
 
    ```python
-   from transformers import pipeline
+   from rembg import remove
 
-   rmbg_pipeline = pipeline("image-segmentation", model="briaai/RMBG-1.4", trust_remote_code=True, device=device)
-
-   output_image = rmbg_pipeline(input_image)
+   output_image = remove(input_image)
    ```
 
 3. 테스트 데이터셋 준비
@@ -113,8 +110,7 @@
 ## 6. 결과 기록 및 분석 방법
 ### 6.1 결과 기록 템플릿
 - 이미지 일부 발췌
-
-<img src="./img/평가 템플릿.png"/>
+<img src="./img/평가_rembg.png"/>
 
 ## 7. 성능 기준 (Acceptance Criteria)
 - MAE: ≤ 10
@@ -135,8 +131,9 @@
 <img src="./img/원본이미지.png"/>
 
 - 이미지 실습 결과 
-<img src="./img/RMBG.png"/>
+<img src="./img/rembg_lib.png"/>
 
 ## 10. 결론
 
-전체 총 이미지 70장에 대하여 준수한 결과를 나타내고 있으며, 프로젝트 성능 기준에 적합하여 도입을 고려해도 되는 단계입니다.
+전체적인 성능은 CPU를 사용했음에도 시간을 적게 사용한다는 부분이 있습니다.
+다만, `cable`과 관련하여 이미지 생성이 제대로 안되는 부분을 발견하였고 해당 라이브러리는 보류하는 방향으로 결론을 내렸습니다.
