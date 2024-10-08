@@ -1,61 +1,91 @@
 import os
 import numpy as np
 from PIL import Image
-from sklearn.metrics import mean_absolute_error
-import pandas as pd
+import csv
 
-# 디렉토리 설정
-original_dir = "C:/DefectStudio/testing_docs/remove_bg/origin"
-expectation_dir = "C:/DefectStudio/testing_docs/remove_bg/expectation"
-test_dir = "C:/DefectStudio/testing_docs/remove_bg/test"
+# 입력 디렉토리 설정
+mask_dir = './generated'  # 원본 이미지 디렉토리
+rmbg_dir = './mask_RMBG'  # 생성된 이미지 디렉토리 1
+rembg_lib_dir = './mask_rembg_lib'  # 생성된 이미지 디렉토리 2
 
-# 결과 저장을 위한 리스트
-results = []
+# CSV 파일 경로 설정
+csv_file_path = './mae_evaluation.csv'
 
-# 디렉토리 내의 모든 이미지 파일에 대해 MAE 계산
-for filename in os.listdir(original_dir):
-    if filename.lower().endswith((".png", ".jpg", ".jpeg")):
-        base_filename = os.path.splitext(filename)[0]  # 확장자를 제외한 파일 이름
-        original_image_path = os.path.join(original_dir, filename)
-        test_image_filename = f"{base_filename}.png"
-        test_image_path = os.path.join(test_dir, test_image_filename)
 
-        # 예상 이미지 파일 이름 생성
-        expectation_image_filename = f"{base_filename}-removebg-preview.png"
-        expectation_image_path = os.path.join(expectation_dir, expectation_image_filename)
+# MAE 계산 함수
+def calculate_mae(image1, image2):
+    image1_np = np.array(image1).astype(np.float32)
+    image2_np = np.array(image2).astype(np.float32)
 
-        # 예상 이미지와 테스트 이미지가 존재하는지 확인
-        if not os.path.exists(expectation_image_path):
-            print(f"Expected image not found for {filename}. Skipping.")
-            continue
+    # 두 이미지 크기가 같아야 하므로 resize 진행
+    if image1_np.shape != image2_np.shape:
+        image2_np = np.resize(image2_np, image1_np.shape)
 
-        try:
-            # 예상 이미지와 테스트 이미지 로드
-            expectation_image = Image.open(expectation_image_path).convert("RGB")
-            test_image = Image.open(test_image_path).convert("RGB")
+    mae = np.mean(np.abs(image1_np - image2_np))
+    return mae
 
-            # 이미지를 numpy 배열로 변환
-            expectation_array = np.array(expectation_image)
-            test_array = np.array(test_image)
 
-            # 이미지 크기가 동일한지 확인
-            if expectation_array.shape != test_array.shape:
-                print(f"Error: Image dimensions do not match for {filename}. Skipping.")
-                continue
+# PNG 파일만 가져오는 함수
+def get_png_files(directory):
+    return sorted([f for f in os.listdir(directory) if f.lower().endswith(".png")])
+
+
+# MAE 평가를 진행하고 결과를 CSV에 기록하는 함수
+def evaluate_and_save_mae(mask_dir, generated_dir1, generated_dir2, csv_file_path):
+    mask_files = get_png_files(mask_dir)
+    generated_files1 = get_png_files(generated_dir1)
+    generated_files2 = get_png_files(generated_dir2)
+
+    if len(mask_files) == 0 or len(generated_files1) == 0 or len(generated_files2) == 0:
+        print("Error: One or more directories are empty or contain no PNG files.")
+        return
+
+    total_mae_1 = 0
+    total_mae_2 = 0
+    num_images = len(mask_files)
+
+    with open(csv_file_path, 'w', newline='') as csvfile:
+        csv_writer = csv.writer(csvfile)
+        # CSV 파일에 헤더 작성
+        csv_writer.writerow(['Image', 'MAE (mask_RMBG)', 'MAE (mask_rembg_lib)'])
+
+        for i, mask_file in enumerate(mask_files):
+            mask_image_path = os.path.join(mask_dir, mask_file)
+            gen_image1_path = os.path.join(generated_dir1, generated_files1[i])
+            gen_image2_path = os.path.join(generated_dir2, generated_files2[i])
+
+            # 이미지 열기
+            mask_image = Image.open(mask_image_path).convert('L')
+            gen_image1 = Image.open(gen_image1_path).convert('L')
+            gen_image2 = Image.open(gen_image2_path).convert('L')
 
             # MAE 계산
-            mae = mean_absolute_error(expectation_array.flatten(), test_array.flatten())
+            mae_1 = calculate_mae(mask_image, gen_image1)
+            mae_2 = calculate_mae(mask_image, gen_image2)
 
-            # 결과 저장
-            results.append({'Image': filename, 'MAE': mae})
-            print(f"MAE for {filename}: {mae}")
+            # 결과를 CSV 파일에 기록
+            csv_writer.writerow([mask_file, mae_1, mae_2])
 
-        except Exception as e:
-            print(f"Error processing {filename}: {e}")
+            total_mae_1 += mae_1
+            total_mae_2 += mae_2
 
-# 결과를 데이터프레임으로 변환하여 표로 나타내기
-mae_df = pd.DataFrame(results)
+            # 10장마다 MAE 평균 출력
+            if (i + 1) % 10 == 0:
+                avg_mae_1 = total_mae_1 / (i + 1)
+                avg_mae_2 = total_mae_2 / (i + 1)
+                print(f"Average MAE for {i + 1} images (mask_RMBG): {avg_mae_1:.4f}")
+                print(f"Average MAE for {i + 1} images (mask_rembg_lib): {avg_mae_2:.4f}")
 
-# 결과를 콘솔에 출력하거나 CSV 파일로 저장할 수 있음
-print(mae_df)
-mae_df.to_csv('mae_results.csv', index=False)
+        # 전체 MAE 평균 계산 및 출력
+        overall_avg_mae_1 = total_mae_1 / num_images
+        overall_avg_mae_2 = total_mae_2 / num_images
+
+        csv_writer.writerow([])
+        csv_writer.writerow(['Overall Average MAE', overall_avg_mae_1, overall_avg_mae_2])
+
+        print(f"Overall Average MAE (mask_RMBG): {overall_avg_mae_1:.4f}")
+        print(f"Overall Average MAE (mask_rembg_lib): {overall_avg_mae_2:.4f}")
+
+
+# MAE 평가 실행
+evaluate_and_save_mae(mask_dir, rmbg_dir, rembg_lib_dir, csv_file_path)
