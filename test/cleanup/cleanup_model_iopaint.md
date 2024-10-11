@@ -6,6 +6,7 @@
 ### 1.2 테스트 대상 모델
 - 라이브러리명: **IOPaint**
 - 레퍼런스: [github](https://github.com/Sanster/IOPaint) / [pypi](https://pypi.org/project/IOPaint/) / [hugging face](https://huggingface.co/spaces/Sanster/Lama-Cleaner-lama)
+- 사용 모델: big-lama
 
 ## 2. 테스트 환경
 ### 2.1 하드웨어 (ex.)
@@ -53,7 +54,7 @@
 #### 4.1.2 Speed/GPU Usage 평가
 | 표본 | 처리 시간 (ms) | GPU 메모리 (MB) |
 |---------------|---------------|----------------|
-|      1장         |      2100ms      |     300MB        |
+|      1장         |      1900ms      |     300MB        |
 |      10장         |     16700ms       |      600MB     |
 |      40장         |     63260ms       |      900MB      |
 
